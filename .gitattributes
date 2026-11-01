@@ -1,0 +1,10 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Ensure Linux shell scripts retain LF endings on Linux/Docker/Render
+mvnw text eol=lf
+*.sh text eol=lf
+
+# Windows command scripts
+*.cmd text eol=crlf
+*.bat text eol=crlf

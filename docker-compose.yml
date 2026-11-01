@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgresdb:
+    image: postgres:16-alpine
+    container_name: prathi-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: prathi
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  prathi-app:
+    build: .
+    container_name: prathi-app
+    restart: always
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresdb:5432/prathi
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-postgres}
+    depends_on:
+      - postgresdb
+
+volumes:
+  postgres_data:

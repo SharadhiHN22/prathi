@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EditShare — Online Text & Code Sharing Platform</title>
+  <meta name="description" content="Create, share, and edit text or code snippets through a persistent unique URL. Supports private and collaborative editing, version history, expiration, and password protection.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Prism.js for Syntax Highlighting (Tomorrow Night theme) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="brand" id="brandLogo">
+        <span class="brand-icon">⚡</span>
+        <span class="brand-name">EditShare</span>
+        <span class="brand-tag">Persistent Links</span>
+      </a>
+
+      <div class="nav-actions">
+        <button id="navNewClipBtn" class="btn btn-secondary" title="Create New Clip">
+          <span>+</span> New Clip
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-container">
+    
+    <!-- SECTION 1: CREATE NEW CLIP -->
+    <section id="createSection" class="view-panel active">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <input type="text" id="createTitle" class="input-title" placeholder="Untitled Clip (Optional Title)..." maxlength="100">
+        </div>
+        <div class="panel-toolbar">
+          <div class="control-group">
+            <label for="createLanguage">Language</label>
+            <select id="createLanguage" class="select-dropdown">
+              <option value="plaintext">Plain Text</option>
+              <option value="javascript">JavaScript</option>
+              <option value="typescript">TypeScript</option>
+              <option value="java">Java</option>
+              <option value="python">Python</option>
+              <option value="c">C</option>
+              <option value="cpp">C++</option>
+              <option value="csharp">C#</option>
+              <option value="go">Go</option>
+              <option value="rust">Rust</option>
+              <option value="sql">SQL</option>
+              <option value="html">HTML</option>
+              <option value="css">CSS</option>
+              <option value="json">JSON</option>
+              <option value="yaml">YAML</option>
+              <option value="bash">Bash / Shell</option>
+              <option value="markdown">Markdown</option>
+              <option value="php">PHP</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="createEditMode">Permissions</label>
+            <select id="createEditMode" class="select-dropdown">
+              <option value="PRIVATE">🔒 Private (Creator only)</option>
+              <option value="COLLABORATIVE">👥 Collaborative (Anyone with link)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="createExpiration">Expiration</label>
+            <select id="createExpiration" class="select-dropdown" required>
+              <option value="TEN_MINUTES">10 Minutes</option>
+              <option value="ONE_HOUR">1 Hour</option>
+              <option value="ONE_DAY" selected>1 Day</option>
+              <option value="ONE_WEEK">1 Week</option>
+              <option value="AFTER_ONE_VIEW">Delete after 1 view</option>
+            </select>
+          </div>
+
+          <button id="toggleSecurityOptionsBtn" class="btn btn-ghost" title="Password Protection Options">
+            <span>🔐</span> Security
+          </button>
+        </div>
+      </div>
+
+      <!-- Expandable Security Options Drawer -->
+      <div id="securityDrawer" class="security-drawer hidden">
+        <div class="security-drawer-content">
+          <div class="field-item">
+            <label for="createViewPassword">🔒 View Password <small>(Optional — require password to view)</small></label>
+            <input type="password" id="createViewPassword" class="input-text" placeholder="Leave empty for public viewing">
+          </div>
+          <div class="field-item" id="collabPasswordField" style="display: none;">
+            <label for="createEditPassword">👥 Collab Edit Password <small>(Optional — require password to edit)</small></label>
+            <input type="password" id="createEditPassword" class="input-text" placeholder="Leave empty to let anyone edit">
+          </div>
+        </div>
+      </div>
+
+      <!-- Code Editor Workspace -->
+      <div class="editor-wrapper">
+        <textarea id="createContent" class="code-editor" placeholder="Paste your code, notes, or text snippet here... (Press Tab for 4 spaces, Ctrl+S to save)" spellcheck="false" autocomplete="off"></textarea>
+      </div>
+
+      <!-- Editor Footer Action Bar -->
+      <div class="editor-footer">
+        <div class="stats-counter">
+          <span id="charCount">0 characters</span> • <span id="lineCount">1 line</span>
+        </div>
+        <div class="action-buttons">
+          <button id="createClipBtn" class="btn btn-primary">
+            <span>🚀</span> Create & Share Clip
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: VIEW & EDIT CLIP -->
+    <section id="viewSection" class="view-panel hidden">
+      <div class="clip-meta-banner">
+        <div class="clip-meta-left">
+          <h1 id="viewClipTitle" class="clip-heading">Untitled Clip</h1>
+          <div class="clip-url-container">
+            <a id="viewClipUrlDisplay" class="clip-url-link" href="#" target="_blank" rel="noopener"></a>
+          </div>
+          <div class="clip-tags">
+            <span id="viewLangBadge" class="badge badge-lang">plaintext</span>
+            <span id="viewModeBadge" class="badge badge-mode">Private</span>
+            <span id="viewVersionBadge" class="badge badge-version">v1</span>
+            <span id="viewUpdatedBadge" class="meta-time">Updated recently</span>
+          </div>
+        </div>
+
+        <div class="clip-actions-toolbar">
+          <button id="copyLinkBtn" class="btn btn-outline" title="Copy public share link">
+            <span>🔗</span> Copy Link
+          </button>
+          <button id="shareClipBtn" class="btn btn-outline" title="Share clip">
+            <span>📤</span> Share
+          </button>
+          <button id="showQrBtn" class="btn btn-outline" title="Generate QR Code">
+            <span>📱</span> QR Code
+          </button>
+          <button id="versionHistoryBtn" class="btn btn-outline" title="Inspect version history">
+            <span>🕒</span> History (<span id="historyCount">1</span>)
+          </button>
+          <button id="editToggleBtn" class="btn btn-primary" title="Edit this clip in-place">
+            <span>✏️</span> Edit Clip
+          </button>
+          <button id="deleteClipBtn" class="btn btn-danger hidden" title="Delete this clip permanently">
+            <span>🗑️</span> Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Prominent Clip Sharing Screen Card (Displays Title, URL, Copy Link, QR Code, Download QR, Share) -->
+      <div id="clipShareCard" class="clip-share-card">
+        <div class="share-card-qr-wrapper">
+          <div id="shareCardQrContainer" class="qr-code-frame" title="Scan with mobile camera to open this clip"></div>
+        </div>
+        <div class="share-card-info">
+          <div class="share-card-meta">
+            <span class="share-card-badge">Instant Share &amp; QR</span>
+            <h2 id="shareCardTitle" class="share-card-title">Clip Title</h2>
+            <div class="share-card-url-wrap">
+              <a id="shareCardUrlLink" class="share-card-url" href="#" target="_blank" rel="noopener"></a>
+            </div>
+          </div>
+          <div class="share-card-actions">
+            <button id="shareCardCopyBtn" class="btn btn-outline" title="Copy public share link">
+              <span>🔗</span> Copy Link
+            </button>
+            <button id="shareCardDownloadQrBtn" class="btn btn-secondary" title="Download high-resolution QR code">
+              <span>📥</span> Download QR Code
+            </button>
+            <button id="shareCardShareBtn" class="btn btn-outline" title="Share clip">
+              <span>📤</span> Share
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-Place Edit Controls (Only visible when edit mode active) -->
+      <div id="inplaceEditBar" class="inplace-edit-bar hidden">
+        <div class="edit-inputs">
+          <input type="text" id="editTitleInput" class="input-title-edit" placeholder="Clip Title...">
+          <select id="editLanguageSelect" class="select-dropdown">
+            <option value="plaintext">Plain Text</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="java">Java</option>
+            <option value="python">Python</option>
+            <option value="c">C</option>
+            <option value="cpp">C++</option>
+            <option value="csharp">C#</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="sql">SQL</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+            <option value="bash">Bash / Shell</option>
+            <option value="markdown">Markdown</option>
+            <option value="php">PHP</option>
+          </select>
+          <select id="editExpirationSelect" class="select-dropdown" title="Expiration Duration">
+            <option value="TEN_MINUTES">10 Minutes</option>
+            <option value="ONE_HOUR">1 Hour</option>
+            <option value="ONE_DAY">1 Day</option>
+            <option value="ONE_WEEK">1 Week</option>
+            <option value="AFTER_ONE_VIEW">Delete After One View</option>
+          </select>
+        </div>
+        <div class="edit-actions">
+          <button id="cancelEditBtn" class="btn btn-ghost">Cancel</button>
+          <button id="saveEditBtn" class="btn btn-primary">
+            <span>💾</span> Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- Code Container (Read-Only Highlighted) -->
+      <div id="readOnlyContainer" class="code-container">
+        <div class="code-top-strip">
+          <span id="readOnlyLangLabel" class="lang-label">Plain Text</span>
+          <button id="copyRawContentBtn" class="btn-copy-code" title="Copy raw text">Copy Content</button>
+        </div>
+        <pre class="line-numbers"><code id="codeViewer" class="language-plaintext"></code></pre>
+      </div>
+
+      <!-- Code Editor Container (In-Place Editing Textarea) -->
+      <div id="editableContainer" class="editor-wrapper hidden">
+        <textarea id="editContentTextarea" class="code-editor" spellcheck="false" autocomplete="off"></textarea>
+      </div>
+    </section>
+
+    <!-- SECTION 3: PASSWORD UNLOCK PROMPT (When clip is locked) -->
+    <section id="passwordPromptSection" class="view-panel hidden">
+      <div class="lock-card">
+        <div class="lock-icon">🔒</div>
+        <h2>Password Protected Clip</h2>
+        <p>The creator has protected this clip with a password. Please enter the password to view the content.</p>
+        <div class="password-form">
+          <input type="password" id="viewPasswordInput" class="input-text" placeholder="Enter password..." autofocus>
+          <button id="submitPasswordBtn" class="btn btn-primary">Unlock Clip</button>
+        </div>
+        <div id="passwordError" class="error-msg hidden">Incorrect password. Please try again.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: 404 / EXPIRED SCREEN -->
+    <section id="notFoundSection" class="view-panel hidden">
+      <div class="not-found-card">
+        <div class="not-found-icon">⏳</div>
+        <h2>Clip Not Found or Expired</h2>
+        <p>The requested clip does not exist, or its expiration time has elapsed and it has been purged.</p>
+        <a href="/" class="btn btn-primary">Create a New Clip</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: QR CODE SHARING -->
+  <div id="qrModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Share via QR Code</h3>
+        <button class="close-modal" id="closeQrModal">&times;</button>
+      </div>
+      <div class="modal-body text-center">
+        <p class="modal-subtitle">Scan this QR code with any mobile camera to open this clip.</p>
+        <div id="qrcodeContainer" class="qr-code-frame"></div>
+        <p id="qrUrlDisplay" class="qr-url-text"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="downloadQrBtn" class="btn btn-secondary">Download QR Image</button>
+        <button id="copyQrLinkBtn" class="btn btn-primary">Copy Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VERSION HISTORY -->
+  <div id="historyModal" class="modal-backdrop hidden">
+    <div class="modal-box modal-wide">
+      <div class="modal-header">
+        <h3>Version History for Clip</h3>
+        <button class="close-modal" id="closeHistoryModal">&times;</button>
+      </div>
+      <div class="modal-body history-layout">
+        <div class="version-list-pane">
+          <ul id="versionList" class="version-list">
+            <!-- Dynamically populated versions -->
+          </ul>
+        </div>
+        <div class="version-preview-pane">
+          <div class="version-preview-header">
+            <span id="previewVersionTitle">Select a version</span>
+            <button id="revertBtn" class="btn btn-outline btn-sm hidden">⏪ Revert to this Version</button>
+          </div>
+          <pre class="version-code-pre"><code id="versionCodePreview" class="language-plaintext">Select a version from the left to view contents.</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: COLLAB EDIT PASSWORD PROMPT -->
+  <div id="collabPassModal" class="modal-backdrop hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Collaborative Edit Password Required</h3>
+        <button class="close-modal" id="closeCollabPassModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>This collaborative clip requires an edit password before saving changes.</p>
+        <input type="password" id="collabEditPassInput" class="input-text" placeholder="Enter edit password...">
+      </div>
+      <div class="modal-footer">
+        <button id="submitCollabPassBtn" class="btn btn-primary">Authorize & Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Libraries: Prism.js + Languages + QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+  <!-- Prism language plugins -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup-templating.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-csharp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-rust.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-yaml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markdown.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-php.min.js"></script>
+
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Application JS -->
+  <script src="/app.js"></script>
+</body>
+</html>
