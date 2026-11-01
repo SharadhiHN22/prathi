@@ -1,23 +1,21 @@
 services:
-
-* type: web
-  name: prathi
-  runtime: docker
-  dockerContext: .
-  dockerfilePath: Dockerfile
-  plan: free
-  region: singapore
-  envVars:
-
-  * key: PORT
-    value: 10000
-  * key: DATABASE_URL
-    sync: false
-  * key: DATABASE_USERNAME
-    sync: false
-  * key: DATABASE_PASSWORD
-    sync: false
-  * key: APP_BASE_URL
-    sync: false
-  * key: CLEANUP_CRON
-    value: "0 */5 * * * *"
+  - type: web
+    name: prathi
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    plan: free
+    region: singapore
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+      - key: CLEANUP_CRON
+        value: "0 */5 * * * *"
